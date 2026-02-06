@@ -28,6 +28,7 @@ public class CryptoService {
             Coin[] coins = restTemplate.getForObject(url, Coin[].class);
             List<Coin> coinList = Arrays.asList(coins != null ? coins : new Coin[0]);
             coinRepository.saveAll(coinList);
+            System.out.println("Da luu thanh cong " + coinRepository.count() + " dong coin vao DB");
             return coinList;
         } catch (Exception e) {
             System.err.println("Lỗi CoinGecko getCoins: " + e.getMessage());
