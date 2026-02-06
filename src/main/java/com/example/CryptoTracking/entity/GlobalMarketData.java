@@ -15,10 +15,10 @@ public class GlobalMarketData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int activeCryptocurrencies; // tổng số coin
-    private int markets;                // tổng số sàn
-    private double totalMarketCapUsd;   // tổng vốn hóa (USD)
-    private double totalVolumeUsd;      // tổng volume (USD)
+    private int activeCryptocurrencies; // total coin
+    private int markets;                // total market
+    private double totalMarketCapUsd;   // total market cap (USD)
+    private double totalVolumeUsd;      // total volume (USD)
     private double marketCapChangePercentage24hUsd; // % change 24h (USD)
     private double btcDominance;        // BTC dominance (%)
     private long updatedAt;             // timestamp
