@@ -28,10 +28,10 @@ public class CryptoService {
             Coin[] coins = restTemplate.getForObject(url, Coin[].class);
             List<Coin> coinList = Arrays.asList(coins != null ? coins : new Coin[0]);
             coinRepository.saveAll(coinList);
-            System.out.println("Da luu thanh cong " + coinRepository.count() + " dong coin vao DB");
+            System.out.println("Save successfully " + coinRepository.count() + " coins to Database");
             return coinList;
         } catch (Exception e) {
-            System.err.println("Lỗi CoinGecko getCoins: " + e.getMessage());
+            System.err.println("CoinGecko getCoins exception: " + e.getMessage());
             return coinRepository.findAll();
         }
     }
@@ -48,7 +48,7 @@ public class CryptoService {
             globalRepo.save(globalData);
             return globalData;
         } catch (Exception e) {
-            System.err.println("Lỗi CoinGecko getGlobalMarketData: " + e.getMessage());
+            System.err.println("CoinGecko getGlobalMarketData exception: " + e.getMessage());
             throw new RuntimeException("Error fetching global data: " + e.getMessage());
         }
     }
@@ -64,7 +64,7 @@ public class CryptoService {
             Coin coin = mapToCoinFromDetail(response);
             return coinRepository.save(coin);
         } catch (Exception e) {
-            System.err.println("Lỗi CoinGecko getCoinById: " + e.getMessage());
+            System.err.println("CoinGecko getCoinById exception: " + e.getMessage());
             throw new RuntimeException("Could not find coin with ID: " + id);
         }
     }
