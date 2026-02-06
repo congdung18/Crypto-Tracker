@@ -2,15 +2,13 @@ package com.example.CryptoTracking.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import com.example.CryptoTracking.entity.Coin;
 import com.example.CryptoTracking.entity.GlobalMarketData;
 import com.example.CryptoTracking.repository.CoinRepository;
+import com.example.CryptoTracking.repository.GlobalMarketDataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import java.util.List;
-import java.util.Arrays;
-import java.util.Map;
+
+import java.util.*;
 
 @Service
 public class CryptoService {
@@ -21,35 +19,52 @@ public class CryptoService {
     @Autowired
     private CoinRepository coinRepository;
 
+    @Autowired
+    private GlobalMarketDataRepository globalRepo;
+
     public List<Coin> getCoins(int page, int perPage) {
         String url = BASE_URL + "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=" + perPage + "&page=" + page + "&sparkline=false&price_change_percentage=24h%2C7d%2C14d%2C30d";
         try {
             Coin[] coins = restTemplate.getForObject(url, Coin[].class);
-            List<Coin> coinList = Arrays.asList(coins);
-            // Save to database for caching
+            List<Coin> coinList = Arrays.asList(coins != null ? coins : new Coin[0]);
             coinRepository.saveAll(coinList);
             return coinList;
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            // Handle API errors
-            throw new RuntimeException("Error fetching coins: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Lỗi CoinGecko getCoins: " + e.getMessage());
+            return coinRepository.findAll();
+        }
+    }
+
+    public GlobalMarketData getGlobalMarketData() {
+        String url = BASE_URL + "/global";
+        try {
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            GlobalMarketData globalData = GlobalMarketData.fromMap(response);
+            if (globalData == null) {
+                globalData = new GlobalMarketData();
+                globalData.setUpdatedAt(System.currentTimeMillis() / 1000L);
+            }
+            globalRepo.save(globalData);
+            return globalData;
+        } catch (Exception e) {
+            System.err.println("Lỗi CoinGecko getGlobalMarketData: " + e.getMessage());
+            throw new RuntimeException("Error fetching global data: " + e.getMessage());
         }
     }
 
     public Coin getCoinById(String id) {
-        // First check database
-        Coin coin = coinRepository.findById(id).orElse(null);
-        if (coin != null) {
-            return coin;
-        }
-        // If not in DB, fetch from API
+        return coinRepository.findById(id).orElseGet(() -> fetchCoinFromApi(id));
+    }
+
+    private Coin fetchCoinFromApi(String id) {
         String url = BASE_URL + "/coins/" + id + "?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false";
         try {
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-            coin = mapToCoin(response);
-            coinRepository.save(coin);
-            return coin;
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new RuntimeException("Error fetching coin: " + e.getMessage());
+            Coin coin = mapToCoinFromDetail(response);
+            return coinRepository.save(coin);
+        } catch (Exception e) {
+            System.err.println("Lỗi CoinGecko getCoinById: " + e.getMessage());
+            throw new RuntimeException("Could not find coin with ID: " + id);
         }
     }
 
@@ -72,47 +87,60 @@ public class CryptoService {
         return coinRepository.findAllByOrderByMarketCapDesc();
     }
 
-    private Coin mapToCoin(Map<String, Object> data) {
+    @SuppressWarnings("unchecked")
+    private Coin mapToCoinFromDetail(Map<String, Object> data) {
         Coin coin = new Coin();
         coin.setId((String) data.get("id"));
         coin.setSymbol((String) data.get("symbol"));
         coin.setName((String) data.get("name"));
-        coin.setImage((String) ((Map<String, Object>) data.get("image")).get("large"));
+
+        // Extract image from nested image object
+        Object imageObj = data.get("image");
+        if (imageObj instanceof Map) {
+            coin.setImage((String) ((Map) imageObj).get("large"));
+        }
 
         Map<String, Object> marketData = (Map<String, Object>) data.get("market_data");
         if (marketData != null) {
-            Map<String, Object> currentPrice = (Map<String, Object>) marketData.get("current_price");
-            coin.setCurrentPrice(((Number) currentPrice.get("usd")).doubleValue());
+            // current_price: { usd: ... }
+            Map<String, Object> cpMap = (Map<String, Object>) marketData.get("current_price");
+            if (cpMap != null) coin.setCurrentPrice(asDouble(cpMap.get("usd")));
 
-            Map<String, Object> marketCap = (Map<String, Object>) marketData.get("market_cap");
-            coin.setMarketCap(((Number) marketCap.get("usd")).longValue());
+            // market_cap: { usd: ... }
+            Map<String, Object> mcMap = (Map<String, Object>) marketData.get("market_cap");
+            if (mcMap != null) coin.setMarketCap(((Number) mcMap.get("usd")).longValue());
 
-            coin.setMarketCapRank(((Number) marketData.get("market_cap_rank")).intValue());
+            coin.setMarketCapRank(asInt(marketData.get("market_cap_rank")));
 
-            Map<String, Object> totalVolume = (Map<String, Object>) marketData.get("total_volume");
-            coin.setTotalVolume(((Number) totalVolume.get("usd")).doubleValue());
+            // total_volume: { usd: ... }
+            Map<String, Object> tvMap = (Map<String, Object>) marketData.get("total_volume");
+            if (tvMap != null) coin.setTotalVolume(asDouble(tvMap.get("usd")));
 
-            Map<String, Object> high1h = (Map<String, Object>) marketData.get("high_1h");
-            coin.setHigh1h(((Number) high1h.get("usd")).doubleValue());
+            // high_24h: { usd: ... }
+            Map<String, Object> h24Map = (Map<String, Object>) marketData.get("high_24h");
+            if (h24Map != null) coin.setHigh24h(asDouble(h24Map.get("usd")));
 
-            Map<String, Object> low1h = (Map<String, Object>) marketData.get("low_1h");
-            coin.setLow1h(((Number) low1h.get("usd")).doubleValue());
+            // low_24h: { usd: ... }
+            Map<String, Object> l24Map = (Map<String, Object>) marketData.get("low_24h");
+            if (l24Map != null) coin.setLow24h(asDouble(l24Map.get("usd")));
 
-            Map<String, Object> high24h = (Map<String, Object>) marketData.get("high_24h");
-            coin.setHigh24h(((Number) high24h.get("usd")).doubleValue());
-
-            Map<String, Object> low24h = (Map<String, Object>) marketData.get("low_24h");
-            coin.setLow24h(((Number) low24h.get("usd")).doubleValue());
-
-            Map<String, Object> priceChange24h = (Map<String, Object>) marketData.get("price_change_percentage_24h");
-            coin.setPriceChangePercentage24h(((Number) priceChange24h.get("usd")).doubleValue());
-
-            Map<String, Object> priceChange7d = (Map<String, Object>) marketData.get("price_change_percentage_7d");
-            coin.setPriceChangePercentage7d(((Number) priceChange7d.get("usd")).doubleValue());
-
+            // price changes (already flat)
+            coin.setPriceChangePercentage24h(asDouble(marketData.get("price_change_percentage_24h")));
+            coin.setPriceChangePercentage7d(asDouble(marketData.get("price_change_percentage_7d_in_currency")));
+            coin.setPriceChangePercentage14d(asDouble(marketData.get("price_change_percentage_14d_in_currency")));
+            coin.setPriceChangePercentage30d(asDouble(marketData.get("price_change_percentage_30d_in_currency")));
+            coin.setPriceChangePercentage1h(asDouble(marketData.get("price_change_percentage_1h_in_currency")));
         }
 
         coin.setLastUpdated((String) data.get("last_updated"));
         return coin;
+    }
+
+    private Double asDouble(Object o) {
+        return (o instanceof Number) ? ((Number) o).doubleValue() : 0.0;
+    }
+
+    private Integer asInt(Object o) {
+        return (o instanceof Number) ? ((Number) o).intValue() : 0;
     }
 }

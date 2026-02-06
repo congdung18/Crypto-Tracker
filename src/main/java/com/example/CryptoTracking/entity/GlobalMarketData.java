@@ -1,9 +1,20 @@
 package com.example.CryptoTracking.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.Map;
 
+@Entity
+@Table(name = "global_market_data")
 public class GlobalMarketData {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private int activeCryptocurrencies; // tổng số coin
     private int markets;                // tổng số sàn
     private double totalMarketCapUsd;   // tổng vốn hóa (USD)
@@ -14,13 +25,20 @@ public class GlobalMarketData {
 
     public GlobalMarketData() {}
 
-    // Convenience mapper from CoinGecko `/global` response
+    // Convenience mapper from CoinGecko `/global` response or similar
     @SuppressWarnings("unchecked")
     public static GlobalMarketData fromMap(Map<String, Object> root) {
         if (root == null) return null;
         Object dataObj = root.get("data");
-        if (!(dataObj instanceof Map)) return null;
-        Map<String, Object> data = (Map<String, Object>) dataObj;
+        Map<String, Object> data;
+        if (dataObj instanceof Map) {
+            data = (Map<String, Object>) dataObj;
+        } else if (root.containsKey("total_market_cap") || root.containsKey("total_volume")) {
+            // sometimes API returns flattened object
+            data = root;
+        } else {
+            return null;
+        }
 
         GlobalMarketData g = new GlobalMarketData();
         Object ac = data.get("active_cryptocurrencies");
@@ -33,12 +51,16 @@ public class GlobalMarketData {
         if (totalMarketCap instanceof Map) {
             Object usd = ((Map) totalMarketCap).get("usd");
             if (usd instanceof Number) g.setTotalMarketCapUsd(((Number) usd).doubleValue());
+        } else if (totalMarketCap instanceof Number) {
+            g.setTotalMarketCapUsd(((Number) totalMarketCap).doubleValue());
         }
 
         Object totalVolume = data.get("total_volume");
         if (totalVolume instanceof Map) {
             Object usd = ((Map) totalVolume).get("usd");
             if (usd instanceof Number) g.setTotalVolumeUsd(((Number) usd).doubleValue());
+        } else if (totalVolume instanceof Number) {
+            g.setTotalVolumeUsd(((Number) totalVolume).doubleValue());
         }
 
         Object mcChange = data.get("market_cap_change_percentage_24h_usd");
@@ -57,6 +79,9 @@ public class GlobalMarketData {
     }
 
     // Getters / Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
     public int getActiveCryptocurrencies() { return activeCryptocurrencies; }
     public void setActiveCryptocurrencies(int activeCryptocurrencies) { this.activeCryptocurrencies = activeCryptocurrencies; }
 
