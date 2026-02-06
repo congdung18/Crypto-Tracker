@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface GlobalMarketDataRepository extends JpaRepository<GlobalMarketData, Long> {
-    // Could add helper to fetch latest entry
 }
