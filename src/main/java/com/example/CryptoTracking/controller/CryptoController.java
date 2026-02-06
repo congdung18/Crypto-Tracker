@@ -7,7 +7,7 @@
     import com.example.CryptoTracking.entity.GlobalMarketData;
     import java.util.List;
 
-    //http://localhost:8080/api/coins/... (link)
+    //http://localhost:server.port/api/coins/... (link)
     @RestController
     @RequestMapping("/api/coins")
     @CrossOrigin(origins = "*") // For frontend integration
@@ -28,25 +28,25 @@
         }
 
     @GetMapping("/sort/rank") 
-    //http://localhost:8080/api/coins/sort/rank (link)
+    //http://localhost:server.port/api/coins/sort/rank (link)
     public List<Coin> getCoinsSortedByRank() {
         return cryptoService.getCoinsSortedByRank();
     }
 
     @GetMapping("/sort/price")
-    //http://localhost:8080/api/coins/sort/price
+    //http://localhost:server.port/api/coins/sort/price
     public List<Coin> getCoinsSortedByPrice() {
         return cryptoService.getCoinsSortedByPrice();
     }
 
     @GetMapping("/sort/market_cap")
-    //http://localhost:8080/api/coins/sort/market_cap
+    //http://localhost:server.port/api/coins/sort/market_cap
     public List<Coin> getCoinsSortedByMarketCap() {
         return cryptoService.getCoinsSortedByMarketCap();
     }
 
     @GetMapping("/search")
-    //http://localhost:8080/api/coins/search?query=(id of coin) | ex: btc, eth,...
+    //http://localhost:server.port/api/coins/search?query=(id of coin) | ex: btc, eth,...
     public List<Coin> searchCoins(@RequestParam String query) {
         return cryptoService.searchCoins(query);
     }
