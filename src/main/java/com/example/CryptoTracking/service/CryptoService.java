@@ -2,12 +2,22 @@ package com.example.CryptoTracking.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import com.example.CryptoTracking.controller.*;
 import com.example.CryptoTracking.entity.Coin;
-import com.example.CryptoTracking.entity.GlobalMarketData;
-import com.example.CryptoTracking.repository.CoinRepository;
-import com.example.CryptoTracking.repository.GlobalMarketDataRepository;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import com.example.CryptoTracking.entity.*;
+import com.example.CryptoTracking.repository.*;
 
+
+import java.util.Collection;
+import java.lang.reflect.Array;
 import java.util.*;
 
 @Service
@@ -16,22 +26,35 @@ public class CryptoService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final String BASE_URL = "https://api.coingecko.com/api/v3";
 
+    @Value("${COINGECKO_API_KEY}")
+    private String api_key;
+
     @Autowired
     private CoinRepository coinRepository;
 
     @Autowired
     private GlobalMarketDataRepository globalRepo;
 
+    public HttpHeaders createHeaders(){
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.set("x-cg-demo-api-key", api_key);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        return headers;
+    }
+
     public List<Coin> getCoins(int page, int perPage) {
-        String url = BASE_URL + "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=" + perPage + "&page=" + page + "&sparkline=false&price_change_percentage=24h%2C7d%2C14d%2C30d";
+        String url = BASE_URL + "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=" + perPage + 
+             "&page=" + page + "&sparkline=false&price_change_percentage=1h%2C24h%2C7d%2C14d%2C30d";
+
         try {
-            Coin[] coins = restTemplate.getForObject(url, Coin[].class);
-            List<Coin> coinList = Arrays.asList(coins != null ? coins : new Coin[0]);
-            coinRepository.saveAll(coinList);
-            System.out.println("Save successfully " + coinRepository.count() + " coins to Database");
-            return coinList;
-        } catch (Exception e) {
-            System.err.println("CoinGecko getCoins exception: " + e.getMessage());
+            HttpEntity<String> entity = new HttpEntity<>(createHeaders());
+            ResponseEntity<Coin[]> response = restTemplate.exchange(url, HttpMethod.GET, entity, Coin[].class);
+            List<Coin> CoinList = Arrays.asList(response.getBody() != null ? response.getBody() : new Coin[0]);
+            coinRepository.saveAll(CoinList);
+
+            return CoinList;
+        }catch(Exception e){
+            System.err.println("Error: " + e.getMessage());
             return coinRepository.findAll();
         }
     }
