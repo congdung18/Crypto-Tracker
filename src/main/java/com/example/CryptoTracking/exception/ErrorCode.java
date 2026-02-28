@@ -10,7 +10,7 @@ public enum ErrorCode {
 
     // Application exception
     // Error code: 10xx
-    APP_API_FETCH_EXCEPTION(1000, "API fetch error", HttpStatus.BAD_REQUEST),
+    APP_API_FETCH_EXCEPTION(1000, "API fetch error", HttpStatus.BAD_GATEWAY),
     APP_RESOURCE_NOT_FOUND(1001, "Resource not found in Database", HttpStatus.NOT_FOUND);
 
     private final int code;
