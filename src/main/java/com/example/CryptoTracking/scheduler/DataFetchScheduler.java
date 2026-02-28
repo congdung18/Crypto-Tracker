@@ -1,11 +1,13 @@
 package com.example.CryptoTracking.scheduler;
 
 import com.example.CryptoTracking.service.GlobalMarketService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import com.example.CryptoTracking.service.CoinService;
 
+@Slf4j
 @Component
 public class DataFetchScheduler {
     @Autowired
@@ -19,9 +21,10 @@ public class DataFetchScheduler {
     public void fetchAndStore() {
         try {
             coinService.fetchCoinsFromAPI();
+
             globalMarketService.fetchGlobalMarketsFromAPI();
         } catch (Exception e) {
-            System.err.println("Scheduled fetch failed: " + e.getMessage());
+            log.error("Scheduler failed: ", e);
         }
     }
 }
