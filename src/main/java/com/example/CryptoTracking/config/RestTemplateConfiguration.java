@@ -1,5 +1,8 @@
 package com.example.CryptoTracking.config;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +12,16 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
+@OpenAPIDefinition(
+        info = @Info(
+                title = "Crypto Tracker API",
+                version = "1.0.0",
+                description = "API provides information about crypto currencies, fetching crypto data from CoinGecko every 5 minutes"
+        ),
+        servers = {
+                @Server(url = "http://localhost:8088/api/v1", description = "Local development server")
+        }
+)
 public class RestTemplateConfiguration {
     @Value("${coingecko.api.connect.timeout}")
     private int connectTimeout;
