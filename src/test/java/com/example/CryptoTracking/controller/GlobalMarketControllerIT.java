@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(GlobalMarketController.class)
-class GlobalMarketControllerTest {
+class GlobalMarketControllerIT{
 
     @Autowired
     private MockMvc mockMvc;

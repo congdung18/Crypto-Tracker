@@ -77,7 +77,7 @@ public class DataTypeConverter {
         }
     }
 
-    public OffsetDateTime converToOffsetDateTime(Object o){
+    public OffsetDateTime convertToOffsetDateTime(Object o){
         if (o == null){
             return null;
         }

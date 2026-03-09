@@ -25,10 +25,10 @@ import java.time.Duration;
         }
 )
 public class RestTemplateConfiguration {
-    @Value("${coingecko.api.connect.timeout}")
+    @Value("${coingecko.api.connect.timeout:3000}")
     private Duration connectTimeout;
 
-    @Value("${coingecko.api.read.timeout}")
+    @Value("${coingecko.api.read.timeout:5000}")
     private Duration readTimeout;
 
     @Value("${coingecko.api.key:xx-cg-demo-api-key}")

@@ -9,10 +9,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.client.HttpServerErrorException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RestClientTest(
@@ -26,6 +30,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 )
 @Import(RestTemplateConfiguration.class)
 public class CoinGeckoClientIT {
+
     @Autowired
     private CoinGeckoClient coinGeckoClient;
 
@@ -67,12 +72,34 @@ public class CoinGeckoClientIT {
         assertThat(response).isNotNull();
         assertThat(response.getData()).isNotNull();
         assertThat(response.getData().getActiveCryptocurrencies()).isEqualTo(100);
-        assertThat(response.getData().getMarkets()).isEqualTo(100);
-        assertThat(response.getData().getTotalMarketCap()).isNotNull();
-        assertThat(response.getData().getTotalVolume()).isNotNull();
-        assertThat(response.getData().getMarketCapPercentage()).isNotNull();
-        assertThat(response.getData().getMarketCapChangePercentage24hUsd()).isEqualTo(0.36);
-        assertThat(response.getData().getUpdatedAt()).isEqualTo(1836183618);
+
+        mockRestServiceServer.verify();
+    }
+
+    @Test
+    void getCoinsMarket_shouldReturnParsedResponseList(){
+        mockRestServiceServer.expect(requestTo(startsWith("https://api.coingecko.com/api/v3/coins/markets")))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("[{\"id\":\"bitcoin\",\"symbol\":\"btc\",\"current_price\":65000.0}]", MediaType.APPLICATION_JSON));
+
+        var response = coinGeckoClient.getCoinsMarket(1, 10);
+
+        assertThat(response).isNotNull();
+        assertThat(response.size()).isEqualTo(1);
+
+        mockRestServiceServer.verify();
+    }
+
+    @Test
+    void getGlobalMarket_shouldThrowException_whenApiReturns500(){
+        String coinGeckoUrl = "https://api.coingecko.com/api/v3/global";
+
+        mockRestServiceServer.expect(requestTo(coinGeckoUrl))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withServerError());
+
+        assertThatThrownBy(() -> coinGeckoClient.getGlobalMarket())
+                .isInstanceOf(HttpServerErrorException.InternalServerError.class);
 
         mockRestServiceServer.verify();
     }

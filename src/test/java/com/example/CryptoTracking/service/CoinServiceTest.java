@@ -109,4 +109,44 @@ class CoinServiceTest {
         verify(coinRepository).findAll(any(Specification.class), eq(pageable));
         verify(coinMapper).mapCoinToSummaryDto(mockCoinPage);
     }
+
+    @Test
+    void getCoins_WithAllFilters_Success() {
+        CoinPaginationRequest request = new CoinPaginationRequest();
+        request.setId("bit");
+        request.setName("Bitcoin");
+        request.setMinPrice(java.math.BigDecimal.valueOf(1000));
+        request.setMaxPrice(java.math.BigDecimal.valueOf(100000));
+        request.setMinMarketCapRank(1);
+        request.setMaxMarketCapRank(10);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Coin> mockCoinPage = new PageImpl<>(List.of(new Coin()));
+        Page<CoinSummaryResponse> mockDtoPage = new PageImpl<>(List.of(new CoinSummaryResponse()));
+
+        when(coinRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(mockCoinPage);
+        when(coinMapper.mapCoinToSummaryDto(mockCoinPage)).thenReturn(mockDtoPage);
+
+        Page<CoinSummaryResponse> result = coinService.getCoins(request, pageable);
+
+        assertNotNull(result);
+        assertEquals(mockDtoPage, result);
+        verify(coinRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void getCoins_WithNullRequest_Success() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Coin> mockCoinPage = new PageImpl<>(List.of(new Coin()));
+        Page<CoinSummaryResponse> mockDtoPage = new PageImpl<>(List.of(new CoinSummaryResponse()));
+
+        when(coinRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(mockCoinPage);
+        when(coinMapper.mapCoinToSummaryDto(mockCoinPage)).thenReturn(mockDtoPage);
+
+        Page<CoinSummaryResponse> result = coinService.getCoins(null, pageable);
+
+        assertNotNull(result);
+        assertEquals(mockDtoPage, result);
+        verify(coinRepository).findAll(any(Specification.class), eq(pageable));
+    }
 }
