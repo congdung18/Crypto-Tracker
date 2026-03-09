@@ -4,12 +4,14 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+
+import java.time.Duration;
 
 @Configuration
 @OpenAPIDefinition(
@@ -24,33 +26,29 @@ import org.springframework.web.client.RestTemplate;
 )
 public class RestTemplateConfiguration {
     @Value("${coingecko.api.connect.timeout}")
-    private int connectTimeout;
+    private Duration connectTimeout;
 
     @Value("${coingecko.api.read.timeout}")
-    private int readTimeout;
+    private Duration readTimeout;
 
     @Value("${coingecko.api.key:xx-cg-demo-api-key}")
     private String apiKey;
 
     @Bean
     // HttpHeader has a Map type
-    public RestTemplate restTemplate(){
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(connectTimeout);
-        factory.setReadTimeout(readTimeout);
+    public RestTemplate coinGeckoRestTemplate(RestTemplateBuilder builder){
+        return builder
+                .connectTimeout(connectTimeout)
+                .readTimeout(readTimeout)
+                .interceptors(((request, body, execution) -> {
+                    request.getHeaders().add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
-        RestTemplate restTemplate = new RestTemplate(factory);
+                    if (apiKey != null && !apiKey.isEmpty()) {
+                        request.getHeaders().add("xx-cg-demo-api-key",apiKey);
+                    }
 
-        restTemplate.getInterceptors().add(((request, body, execution) -> {
-            request.getHeaders().add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-
-            if (apiKey != null && !apiKey.isBlank()){
-                request.getHeaders().add("xx-cg-demo-api-key", apiKey);
-            }
-
-            return execution.execute(request, body);
-        }));
-
-        return restTemplate;
+                    return execution.execute(request, body);
+                }))
+                .build();
     }
 }
