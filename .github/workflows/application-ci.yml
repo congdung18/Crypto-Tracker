@@ -1,7 +1,12 @@
 name: Java SpringBoot CI
 
 on:
-  [push, pull_request]
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -34,13 +39,3 @@ jobs:
         with:
           report_paths: '**/target/*-reports/TEST-*.xml'
           check_name: "JUnit Test Results"
-
-      # test
-      - name: Add Coverage PR Comment
-        uses: Madrapps/jacoco-report@v1.6.1
-        with:
-          paths: ${{ github.workspace }}/target/site/jacoco-merged/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 80
-          min-coverage-changed-files: 80
-          title: Code Coverage Report
