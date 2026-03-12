@@ -7,8 +7,16 @@ services:
       POSTGRES_PASSWORD: 123456
       POSTGRES_DB: crypto_tracker
     ports:
-      - "127.0.0.1:5440:5432"
+      - "127.0.0.1:5444:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  crypto-service:
+    image: redis:latest
+    container_name: crypto-redis
+    ports: 
+      - "6379:6379"
+    restart: always
+  
 volumes:
-  postgres_data:
+  postgres_data:  

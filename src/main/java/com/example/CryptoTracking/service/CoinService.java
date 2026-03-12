@@ -4,17 +4,21 @@ import com.example.CryptoTracking.client.CoinGeckoClient;
 import com.example.CryptoTracking.dto.CoinGeckoResponse;
 import com.example.CryptoTracking.dto.CoinPaginationRequest;
 import com.example.CryptoTracking.dto.CoinSummaryResponse;
+import com.example.CryptoTracking.repository.*;
 import com.example.CryptoTracking.exception.ApplicationException;
 import com.example.CryptoTracking.exception.ErrorCode;
 import com.example.CryptoTracking.mapper.CoinMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.example.CryptoTracking.entity.Coin;
-import com.example.CryptoTracking.repository.*;
 
 import java.util.*;
 
@@ -24,6 +28,7 @@ public class CoinService {
     private final CoinGeckoClient coinGeckoClient;
     private final CoinRepository coinRepository;
     private final CoinMapper coinMapper;
+    private final CacheManager cacheManager;
 
     @Transactional
     public void fetchCoinsFromAPI(){
@@ -70,9 +75,20 @@ public class CoinService {
         }
 
         Page<Coin> coinPage = coinRepository.findAll(specification, pageable);
-        return coinMapper.mapCoinToSummaryDto(coinPage);
+        Page<CoinSummaryResponse> dtoPage = coinMapper.mapCoinToSummaryDto(coinPage);
+
+        Cache detailCache = cacheManager.getCache("coinDetail");
+        if(detailCache != null && dtoPage.hasContent()){
+            dtoPage.getContent().forEach(coinDto ->{
+                // detailCache.put(coinDto.getSymbol().toLowerCase(), coinDto);
+                detailCache.put(coinDto.getId().toLowerCase(), coinDto);
+            });
+        }
+
+        return dtoPage;
     }
 
+    @Cacheable(value = "coinDetail", key = "#id", unless = "#result == null")
     public CoinSummaryResponse getCoinById(String id) {
         Coin coin = coinRepository.findById(id).orElseThrow(() -> new ApplicationException(ErrorCode.APP_RESOURCE_NOT_FOUND));
 

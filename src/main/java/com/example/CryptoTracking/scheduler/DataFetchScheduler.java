@@ -23,6 +23,7 @@ public class DataFetchScheduler {
             coinService.fetchCoinsFromAPI();
 
             globalMarketService.fetchGlobalMarketsFromAPI();
+            //when fetch api, if cache is not null, cache will be deleted automatically
         } catch (Exception e) {
             log.error("Scheduler failed: ", e);
         }

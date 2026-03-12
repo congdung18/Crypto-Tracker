@@ -57,6 +57,7 @@ public class CoinMapper {
         }
 
         return CoinSummaryResponse.builder()
+                .id(response.getId())
                 .symbol(response.getSymbol())
                 .name(response.getName())
                 .image(response.getImage())

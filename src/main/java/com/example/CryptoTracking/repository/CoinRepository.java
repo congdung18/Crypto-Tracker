@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+
 @Repository
 public interface CoinRepository extends JpaRepository<Coin, String>, JpaSpecificationExecutor<Coin> {
     @Query("SELECT c FROM Coin c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(c.symbol) LIKE LOWER(CONCAT('%', :query, '%'))")

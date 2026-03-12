@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
@@ -13,8 +14,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @Schema(description = "Summary response object containing essential cryptocurrency details, designed to minimize payload size and hide internal data")
-public class CoinSummaryResponse {
+public class CoinSummaryResponse implements Serializable {
 
+    @Schema(description = "Crypto id", example = "bitcoin")
+    private String id;
+    
     @Schema(description = "Cryptocurrency symbol", example = "btc")
     private String symbol;
 
