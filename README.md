@@ -15,6 +15,7 @@ A robust backend application built with Spring Boot that allows users to search 
 - [X] **Real-time Tracking:** Fetch and display live cryptocurrency prices.
 - [X] **Search:** Search for specific coins by name or symbol (BTC, ETH, etc.).
 - [X] **Testing:** Achieved 87% test coverage according to JaCoCo.
+- [x] **Optimize queries:** Applied Redis caching (Key strategy for ID) to reduce API response time from ~200ms to <10ms.
 - [ ] **Watchlist:** Allow users to save their favorite coins to a personalized list.
 - [ ] **Historical data:** View price charts for the last 24 hours.
 - [ ] **Optimize queries:** Apply indexing and Redis caching for better query time.
