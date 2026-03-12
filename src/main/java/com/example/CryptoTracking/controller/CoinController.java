@@ -17,13 +17,11 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-// Later will use MockMvc to test
 @RestController
 @RequestMapping("/api/v1/coins")
 @CrossOrigin(origins = "*")
 @Tag(name = "Coins", description = "Endpoints for retrieving and searching cryptocurrency data")
-public class CryptoController {
-
+public class CoinController {
     @Autowired
     private CoinService coinService;
 

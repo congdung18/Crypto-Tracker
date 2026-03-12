@@ -18,7 +18,7 @@ import java.util.List;
 @Slf4j
 public class CoinGeckoClient {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate coinGeckoRestTemplate;
 
     @Value("${coingecko.api.url:https://api.coingecko.com/api/v3}")
     private String baseUrl;
@@ -37,7 +37,7 @@ public class CoinGeckoClient {
                 .queryParam("include_rehypothecated", false)
                 .toUriString();
 
-        var response = restTemplate.exchange(
+        var response = coinGeckoRestTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 null,
@@ -53,7 +53,7 @@ public class CoinGeckoClient {
                 .path("/global")
                 .toUriString();
 
-        var response = restTemplate.exchange(
+        var response = coinGeckoRestTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 null,

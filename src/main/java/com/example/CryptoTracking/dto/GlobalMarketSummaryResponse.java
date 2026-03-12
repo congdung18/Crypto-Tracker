@@ -1,12 +1,16 @@
 package com.example.CryptoTracking.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @Schema(description = "Summary response object containing key global cryptocurrency market metrics. Designed to expose only necessary aggregated data to the client.")
 public class GlobalMarketSummaryResponse {
