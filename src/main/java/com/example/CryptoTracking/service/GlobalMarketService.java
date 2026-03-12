@@ -8,6 +8,8 @@ import com.example.CryptoTracking.mapper.GlobalMarketMapper;
 import com.example.CryptoTracking.repository.GlobalMarketRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,6 +28,7 @@ public class GlobalMarketService {
     }
 
     @Transactional
+    @Cacheable(value = "globalData", key = "'current'")
     public GlobalMarketSummaryResponse getGlobalMarket(){
         GlobalMarket globalMarket = globalMarketRepository.findTopByOrderByUpdatedAtDesc();
         return globalMarketMapper.mapGlobalMarketToSummaryDto(globalMarket);

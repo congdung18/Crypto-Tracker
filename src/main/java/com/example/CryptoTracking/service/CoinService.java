@@ -80,7 +80,6 @@ public class CoinService {
         Cache detailCache = cacheManager.getCache("coinDetail");
         if(detailCache != null && dtoPage.hasContent()){
             dtoPage.getContent().forEach(coinDto ->{
-                // detailCache.put(coinDto.getSymbol().toLowerCase(), coinDto);
                 detailCache.put(coinDto.getId().toLowerCase(), coinDto);
             });
         }
