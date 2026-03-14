@@ -4,31 +4,34 @@ import com.example.CryptoTracking.client.CoinGeckoClient;
 import com.example.CryptoTracking.dto.CoinGeckoResponse;
 import com.example.CryptoTracking.dto.CoinPaginationRequest;
 import com.example.CryptoTracking.dto.CoinSummaryResponse;
+import com.example.CryptoTracking.entity.Coin;
 import com.example.CryptoTracking.repository.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.CryptoTracking.exception.ApplicationException;
 import com.example.CryptoTracking.exception.ErrorCode;
 import com.example.CryptoTracking.mapper.CoinMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import com.example.CryptoTracking.entity.Coin;
-
 import java.util.*;
+import java.time.Duration;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CoinService {
     private final CoinGeckoClient coinGeckoClient;
     private final CoinRepository coinRepository;
     private final CoinMapper coinMapper;
-    private final CacheManager cacheManager;
+    private final RedisTemplate<String, String> template;
+    private final ObjectMapper mapper;
 
     @Transactional
     public void fetchCoinsFromAPI(){
@@ -36,6 +39,19 @@ public class CoinService {
         List<Coin> data = coinMapper.mapCoinGeckoResponseToEntity(rawData);
 
         coinRepository.saveAll(data);
+
+        data.forEach(coin ->{
+            try{
+                CoinSummaryResponse dto = coinMapper.mapCoinToSummaryDto(coin);
+                String json = mapper.writeValueAsString(dto);
+
+                template.opsForValue().set("coinDetail::" + coin.getId(), json, Duration.ofMinutes(1));
+            }catch(JsonProcessingException e){
+                log.error("Serialize coin error {}: {}", coin.getId(), e.getMessage());
+            }
+
+        });
+        log.info("Cache Completed");
     }
 
     @Transactional
@@ -77,20 +93,41 @@ public class CoinService {
         Page<Coin> coinPage = coinRepository.findAll(specification, pageable);
         Page<CoinSummaryResponse> dtoPage = coinMapper.mapCoinToSummaryDto(coinPage);
 
-        Cache detailCache = cacheManager.getCache("coinDetail");
-        if(detailCache != null && dtoPage.hasContent()){
-            dtoPage.getContent().forEach(coinDto ->{
-                detailCache.put(coinDto.getId().toLowerCase(), coinDto);
-            });
+        if (dtoPage.hasContent()) {
+                dtoPage.getContent().forEach(coinDto -> {
+                    try {
+                        String json = mapper.writeValueAsString(coinDto);
+                        String redisKey = "coinDetail::" + coinDto.getId().toLowerCase();
+                        template.opsForValue().set(redisKey, json, Duration.ofMinutes(60));
+                        
+                    } catch (JsonProcessingException e) {
+                        log.error("Coin Cache Error {}: {}", coinDto.getId(), e.getMessage());
+                    }
+                });
+                log.info("Cache Completed", dtoPage.getNumberOfElements());
         }
 
-        return dtoPage;
+    return dtoPage;
     }
 
-    @Cacheable(value = "coinDetail", key = "#id", unless = "#result == null")
     public CoinSummaryResponse getCoinById(String id) {
-        Coin coin = coinRepository.findById(id).orElseThrow(() -> new ApplicationException(ErrorCode.APP_RESOURCE_NOT_FOUND));
+        String key = "coinDetail::" + id.toLowerCase();
 
-        return coinMapper.mapCoinToSummaryDto(coin);
+        String json = template.opsForValue().get(key);
+        if(json != null){
+            try{
+                return mapper.readValue(json, CoinSummaryResponse.class);
+            }catch(JsonProcessingException e){
+                log.warn("Caching Corruption!");
+            }
+        }
+        Coin coin = coinRepository.findById(id).orElseThrow(() -> new ApplicationException(ErrorCode.APP_RESOURCE_NOT_FOUND));
+        
+        CoinSummaryResponse dto = coinMapper.mapCoinToSummaryDto(coin);
+        try {
+            template.opsForValue().set(key, mapper.writeValueAsString(dto), Duration.ofHours(1));
+        } catch (JsonProcessingException ignored) {}
+
+        return dto;
     }
 }
