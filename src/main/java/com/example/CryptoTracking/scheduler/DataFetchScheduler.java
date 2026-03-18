@@ -20,11 +20,13 @@ public class DataFetchScheduler {
     @Scheduled(initialDelay = 10000, fixedRate = 300000)
     public void fetchAndStore() {
         try {
+            
             coinService.fetchCoinsFromAPI();
-
             globalMarketService.fetchGlobalMarketsFromAPI();
+
         } catch (Exception e) {
             log.error("Scheduler failed: ", e);
         }
     }
+
 }

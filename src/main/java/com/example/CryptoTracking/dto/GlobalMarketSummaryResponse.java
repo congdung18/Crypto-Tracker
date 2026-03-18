@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @Schema(description = "Summary response object containing key global cryptocurrency market metrics. Designed to expose only necessary aggregated data to the client.")
-public class GlobalMarketSummaryResponse {
+public class GlobalMarketSummaryResponse implements Serializable{
 
     @Schema(description = "Total number of active cryptocurrencies currently being tracked", example = "13254")
     private Integer activeCryptocurrencies;
