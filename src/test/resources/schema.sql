@@ -17,6 +17,10 @@ CREATE TABLE coins (
    price_change_percentage24h DOUBLE PRECISION,
    price_change_percentage7d DOUBLE PRECISION,
    price_change_percentage1h DOUBLE PRECISION,
+   circulating_supply NUMERIC(25, 8),
+   total_supply NUMERIC(25, 8),
+   max_supply NUMERIC(25, 8),
+   fully_diluted_valuation NUMERIC(25, 8),
    last_updated TIMESTAMP WITH TIME ZONE
 );
 
@@ -31,3 +35,12 @@ CREATE TABLE global_market_data (
     btc_dominance DOUBLE PRECISION,
     updated_at TIMESTAMP WITH TIME ZONE
 );
+
+-- Create coin price history table
+CREATE TABLE coin_price_history (
+    id BIGSERIAL PRIMARY KEY,
+    coin_id VARCHAR(255) NOT NULL,
+    price NUMERIC(19, 8) NOT NULL,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL
+);
+CREATE INDEX idx_price_history_coin_id ON coin_price_history(coin_id);

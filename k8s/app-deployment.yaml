@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypto-tracker-api
+  labels:
+    app: crypto-tracker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: crypto-tracker
+  template:
+    metadata:
+      labels:
+        app: crypto-tracker
+    spec:
+      containers:
+        - name: api
+          image: crypto-tracker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8088
+          env:
+            - name: DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: crypto-tracker-config
+                  key: DB_URL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-tracker-secret
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-tracker-secret
+                  key: DB_PASSWORD
+            - name: SHOW_SQL
+              valueFrom:
+                configMapKeyRef:
+                  name: crypto-tracker-config
+                  key: SHOW_SQL
+            - name: COINGECKO_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: crypto-tracker-config
+                  key: COINGECKO_API_URL
+            - name: COINGECKO_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-tracker-secret
+                  key: COINGECKO_API_KEY
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8088
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8088
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crypto-tracker-service
+  labels:
+    app: crypto-tracker
+spec:
+  type: NodePort
+  ports:
+    - port: 8088
+      targetPort: 8088
+      nodePort: 30088
+  selector:
+    app: crypto-tracker

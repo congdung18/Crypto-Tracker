@@ -74,4 +74,16 @@ public class CoinGeckoResponse {
     @Schema(description = "Price change percentage in the last 1 hour", example = "0.15")
     @JsonProperty("price_change_percentage_1h_in_currency")
     private Double priceChangePercentage1h;
+
+    @JsonProperty("circulating_supply")
+    private BigDecimal circulatingSupply;
+
+    @JsonProperty("total_supply")
+    private BigDecimal totalSupply;
+
+    @JsonProperty("max_supply")
+    private BigDecimal maxSupply;
+
+    @JsonProperty("fully_diluted_valuation")
+    private BigDecimal fullyDilutedValuation;
 }

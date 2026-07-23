@@ -93,23 +93,35 @@ class CoinMapperTest {
     @Test
     void mapCoinToSummaryDto_WithEntity_ShouldReturnCoinSummaryDto() {
         Coin mockCoin = Coin.builder()
+                .id("binancecoin")
                 .symbol("bnb")
                 .name("Binance Coin")
                 .image("https://example.com/bnb.png")
                 .currentPrice(new BigDecimal("600.50"))
                 .marketCapRank(3)
+                .marketCap(123456789L)
+                .totalVolume(new BigDecimal("987654"))
+                .high24h(new BigDecimal("620.00"))
+                .low24h(new BigDecimal("590.00"))
                 .priceChangePercentage24h(5.5)
+                .lastUpdated(java.time.Instant.parse("2026-07-23T14:44:15Z"))
                 .build();
 
         CoinSummaryResponse result = coinMapper.mapCoinToSummaryDto(mockCoin);
 
         assertNotNull(result);
+        assertEquals("binancecoin", result.getId());
         assertEquals("bnb", result.getSymbol());
         assertEquals("Binance Coin", result.getName());
         assertEquals("https://example.com/bnb.png", result.getImage());
         assertEquals(new BigDecimal("600.50"), result.getPrice());
         assertEquals(3, result.getMarketCapRank());
+        assertEquals(123456789L, result.getMarketCap());
+        assertEquals(new BigDecimal("987654"), result.getTotalVolume());
+        assertEquals(new BigDecimal("620.00"), result.getHigh24h());
+        assertEquals(new BigDecimal("590.00"), result.getLow24h());
         assertEquals(5.5, result.getPriceChangePercentage24h());
+        assertEquals(java.time.Instant.parse("2026-07-23T14:44:15Z"), result.getLastUpdated());
     }
 
     @Test
@@ -123,6 +135,7 @@ class CoinMapperTest {
     @Test
     void mapCoinToSummaryDtoPage_WithEntity_ShouldReturnCoinSummaryDtoPage() {
         Coin mockCoin = Coin.builder()
+                .id("solana")
                 .symbol("sol")
                 .name("Solana")
                 .currentPrice(new BigDecimal("150.0"))
@@ -136,6 +149,7 @@ class CoinMapperTest {
         assertEquals(1, result.getTotalElements());
 
         CoinSummaryResponse mappedDto = result.getContent().get(0);
+        assertEquals("solana", mappedDto.getId());
         assertEquals("sol", mappedDto.getSymbol());
         assertEquals("Solana", mappedDto.getName());
         assertEquals(new BigDecimal("150.0"), mappedDto.getPrice());

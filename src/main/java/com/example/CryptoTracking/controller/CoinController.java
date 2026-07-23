@@ -1,7 +1,7 @@
 package com.example.CryptoTracking.controller;
 
-import com.example.CryptoTracking.dto.CoinPaginationRequest;
-import com.example.CryptoTracking.dto.CoinSummaryResponse;
+import com.example.CryptoTracking.dto.*;
+import com.example.CryptoTracking.entity.CoinPriceHistory;
 import com.example.CryptoTracking.service.CoinService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/coins")
@@ -56,5 +58,36 @@ public class CoinController {
 
         CoinSummaryResponse coinSummaryResponse = coinService.getCoinById(id);
         return ResponseEntity.ok(coinSummaryResponse);
+    }
+
+    @Operation(
+            summary = "Get coin exchange tickers and markets",
+            description = "Retrieves active exchange listings and target trading pairs for a specific cryptocurrency."
+    )
+    @GetMapping("/{id}/tickers")
+    public ResponseEntity<CoinTickerResponse> getCoinTickers(
+            @PathVariable String id) {
+        return ResponseEntity.ok(coinService.getCoinTickers(id));
+    }
+
+    @Operation(
+            summary = "Get local historical price data",
+            description = "Retrieves stored price history snapshots for a specific coin from the local database."
+    )
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<CoinPriceHistory>> getCoinHistory(
+            @PathVariable String id) {
+        return ResponseEntity.ok(coinService.getCoinPriceHistory(id));
+    }
+
+    @Operation(
+            summary = "Get coin historical market chart from CoinGecko",
+            description = "Retrieves historical price coordinates from the CoinGecko API."
+    )
+    @GetMapping("/{id}/chart")
+    public ResponseEntity<MarketChartResponse> getCoinMarketChart(
+            @PathVariable String id,
+            @RequestParam(defaultValue = "7") int days) {
+        return ResponseEntity.ok(coinService.getCoinMarketChart(id, days));
     }
 }

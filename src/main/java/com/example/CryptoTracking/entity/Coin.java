@@ -47,5 +47,17 @@ public class Coin {
     private Double priceChangePercentage7d;
     private Double priceChangePercentage1h;
 
+    @Column(precision = 25, scale = 8)
+    private BigDecimal circulatingSupply;
+
+    @Column(precision = 25, scale = 8)
+    private BigDecimal totalSupply;
+
+    @Column(precision = 25, scale = 8)
+    private BigDecimal maxSupply;
+
+    @Column(precision = 25, scale = 8)
+    private BigDecimal fullyDilutedValuation;
+
     private Instant lastUpdated;
 }
