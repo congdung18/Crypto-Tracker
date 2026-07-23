@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crypto-tracker-config
+  labels:
+    app: crypto-tracker
+data:
+  DB_URL: "jdbc:postgresql://crypto-db-service:5432/crypto_tracker"
+  SHOW_SQL: "true"
+  COINGECKO_API_URL: "https://api.coingecko.com/api/v3"

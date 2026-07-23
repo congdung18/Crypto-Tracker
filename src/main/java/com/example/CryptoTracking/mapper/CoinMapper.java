@@ -30,6 +30,10 @@ public class CoinMapper {
                 .priceChangePercentage24h(response.getPriceChangePercentage24h())
                 .priceChangePercentage1h(response.getPriceChangePercentage1h())
                 .priceChangePercentage7d(response.getPriceChangePercentage7d())
+                .circulatingSupply(response.getCirculatingSupply())
+                .totalSupply(response.getTotalSupply())
+                .maxSupply(response.getMaxSupply())
+                .fullyDilutedValuation(response.getFullyDilutedValuation())
                 .lastUpdated(response.getLastUpdated())
                 .build();
     }
@@ -57,12 +61,22 @@ public class CoinMapper {
         }
 
         return CoinSummaryResponse.builder()
+                .id(response.getId())
                 .symbol(response.getSymbol())
                 .name(response.getName())
                 .image(response.getImage())
                 .price(response.getCurrentPrice())
                 .marketCapRank(response.getMarketCapRank())
+                .marketCap(response.getMarketCap())
+                .totalVolume(response.getTotalVolume())
+                .high24h(response.getHigh24h())
+                .low24h(response.getLow24h())
                 .priceChangePercentage24h(response.getPriceChangePercentage24h())
+                .circulatingSupply(response.getCirculatingSupply())
+                .totalSupply(response.getTotalSupply())
+                .maxSupply(response.getMaxSupply())
+                .fullyDilutedValuation(response.getFullyDilutedValuation())
+                .lastUpdated(response.getLastUpdated())
                 .build();
     }
 }

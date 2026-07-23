@@ -27,4 +27,15 @@ public class DataFetchScheduler {
             log.error("Scheduler failed: ", e);
         }
     }
+
+    // Run once every day at midnight to purge price history records older than 7 days
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void purgeOldHistory() {
+        try {
+            log.info("Purging old coin price history records...");
+            coinService.purgeOldHistory();
+        } catch (Exception e) {
+            log.error("Purging old history failed: ", e);
+        }
+    }
 }

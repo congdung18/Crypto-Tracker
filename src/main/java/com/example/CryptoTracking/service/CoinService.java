@@ -1,21 +1,21 @@
 package com.example.CryptoTracking.service;
 
 import com.example.CryptoTracking.client.CoinGeckoClient;
-import com.example.CryptoTracking.dto.CoinGeckoResponse;
-import com.example.CryptoTracking.dto.CoinPaginationRequest;
-import com.example.CryptoTracking.dto.CoinSummaryResponse;
+import com.example.CryptoTracking.dto.*;
+import com.example.CryptoTracking.entity.*;
 import com.example.CryptoTracking.exception.ApplicationException;
 import com.example.CryptoTracking.exception.ErrorCode;
 import com.example.CryptoTracking.mapper.CoinMapper;
+import com.example.CryptoTracking.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import com.example.CryptoTracking.entity.Coin;
-import com.example.CryptoTracking.repository.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -24,6 +24,7 @@ public class CoinService {
     private final CoinGeckoClient coinGeckoClient;
     private final CoinRepository coinRepository;
     private final CoinMapper coinMapper;
+    private final CoinPriceHistoryRepository coinPriceHistoryRepository;
 
     @Transactional
     public void fetchCoinsFromAPI(){
@@ -31,6 +32,18 @@ public class CoinService {
         List<Coin> data = coinMapper.mapCoinGeckoResponseToEntity(rawData);
 
         coinRepository.saveAll(data);
+
+        // Record a price snapshot for each fetched coin in the local price history
+        Instant now = Instant.now();
+        List<CoinPriceHistory> snapshots = data.stream()
+                .filter(coin -> coin.getId() != null && coin.getCurrentPrice() != null)
+                .map(coin -> CoinPriceHistory.builder()
+                        .coinId(coin.getId())
+                        .price(coin.getCurrentPrice())
+                        .timestamp(now)
+                        .build())
+                .toList();
+        coinPriceHistoryRepository.saveAll(snapshots);
     }
 
     @Transactional
@@ -50,22 +63,22 @@ public class CoinService {
 
             if (coinPaginationRequest.getMinPrice() != null){
                 specification = specification.and((root, query, criteriaBuilder) ->
-                        criteriaBuilder.greaterThanOrEqualTo(root.get("min_price"), coinPaginationRequest.getMinPrice().toPlainString()));
+                        criteriaBuilder.greaterThanOrEqualTo(root.get("currentPrice"), coinPaginationRequest.getMinPrice()));
             }
 
             if (coinPaginationRequest.getMaxPrice() != null){
                 specification = specification.and((root, query, criteriaBuilder) ->
-                        criteriaBuilder.lessThanOrEqualTo(root.get("max_price"), coinPaginationRequest.getMaxPrice().toPlainString()));
+                        criteriaBuilder.lessThanOrEqualTo(root.get("currentPrice"), coinPaginationRequest.getMaxPrice()));
             }
 
             if (coinPaginationRequest.getMinMarketCapRank() != null){
                 specification = specification.and((root, query, criteriaBuilder) ->
-                        criteriaBuilder.greaterThanOrEqualTo(root.get("min_market_cap_rank"), coinPaginationRequest.getMinMarketCapRank().toString()));
+                        criteriaBuilder.greaterThanOrEqualTo(root.get("marketCapRank"), coinPaginationRequest.getMinMarketCapRank()));
             }
 
             if (coinPaginationRequest.getMaxMarketCapRank() != null){
                 specification = specification.and((root, query, criteriaBuilder) ->
-                        criteriaBuilder.lessThanOrEqualTo(root.get("max_market_cap_rank"), coinPaginationRequest.getMaxMarketCapRank().toString()));
+                        criteriaBuilder.lessThanOrEqualTo(root.get("marketCapRank"), coinPaginationRequest.getMaxMarketCapRank()));
             }
         }
 
@@ -77,5 +90,23 @@ public class CoinService {
         Coin coin = coinRepository.findById(id).orElseThrow(() -> new ApplicationException(ErrorCode.APP_RESOURCE_NOT_FOUND));
 
         return coinMapper.mapCoinToSummaryDto(coin);
+    }
+
+    public CoinTickerResponse getCoinTickers(String coinId) {
+        return coinGeckoClient.getCoinTickers(coinId);
+    }
+
+    public List<CoinPriceHistory> getCoinPriceHistory(String coinId) {
+        return coinPriceHistoryRepository.findAllByCoinIdOrderByTimestampAsc(coinId);
+    }
+
+    @Transactional
+    public void purgeOldHistory() {
+        Instant threshold = Instant.now().minus(Duration.ofDays(7));
+        coinPriceHistoryRepository.deleteOldHistory(threshold);
+    }
+
+    public MarketChartResponse getCoinMarketChart(String coinId, int days) {
+        return coinGeckoClient.getCoinMarketChart(coinId, days);
     }
 }

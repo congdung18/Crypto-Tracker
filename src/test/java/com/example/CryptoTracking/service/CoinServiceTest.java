@@ -9,6 +9,7 @@ import com.example.CryptoTracking.exception.ApplicationException;
 import com.example.CryptoTracking.exception.ErrorCode;
 import com.example.CryptoTracking.mapper.CoinMapper;
 import com.example.CryptoTracking.repository.CoinRepository;
+import com.example.CryptoTracking.repository.CoinPriceHistoryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,6 +41,9 @@ class CoinServiceTest {
     @Mock
     private CoinMapper coinMapper;
 
+    @Mock
+    private CoinPriceHistoryRepository coinPriceHistoryRepository;
+
     @InjectMocks
     private CoinService coinService;
 
@@ -56,6 +60,7 @@ class CoinServiceTest {
         verify(coinGeckoClient, times(1)).getCoinsMarket(1, 100);
         verify(coinMapper, times(1)).mapCoinGeckoResponseToEntity(mockRawData);
         verify(coinRepository, times(1)).saveAll(mockEntities);
+        verify(coinPriceHistoryRepository, times(1)).saveAll(any(List.class));
     }
 
     @Test

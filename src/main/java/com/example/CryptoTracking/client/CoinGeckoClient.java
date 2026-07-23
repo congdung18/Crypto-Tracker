@@ -1,7 +1,6 @@
 package com.example.CryptoTracking.client;
 
-import com.example.CryptoTracking.dto.CoinGeckoResponse;
-import com.example.CryptoTracking.dto.GlobalDataResponse;
+import com.example.CryptoTracking.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +57,40 @@ public class CoinGeckoClient {
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<GlobalDataResponse>() {}
+        );
+
+        return response.getBody();
+    }
+
+    public CoinTickerResponse getCoinTickers(String id) {
+        String url = UriComponentsBuilder.fromUriString(baseUrl)
+                .path("/coins/{id}/tickers")
+                .buildAndExpand(id)
+                .toUriString();
+
+        var response = coinGeckoRestTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<CoinTickerResponse>() {}
+        );
+
+        return response.getBody();
+    }
+
+    public MarketChartResponse getCoinMarketChart(String id, int days) {
+        String url = UriComponentsBuilder.fromUriString(baseUrl)
+                .path("/coins/{id}/market_chart")
+                .queryParam("vs_currency", "usd")
+                .queryParam("days", days)
+                .buildAndExpand(id)
+                .toUriString();
+
+        var response = coinGeckoRestTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<MarketChartResponse>() {}
         );
 
         return response.getBody();
