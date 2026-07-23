@@ -44,7 +44,7 @@ public class RestTemplateConfiguration {
                     request.getHeaders().add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
                     if (apiKey != null && !apiKey.isEmpty()) {
-                        request.getHeaders().add("xx-cg-demo-api-key",apiKey);
+                        request.getHeaders().add("x-cg-demo-api-key", apiKey);
                     }
 
                     return execution.execute(request, body);
